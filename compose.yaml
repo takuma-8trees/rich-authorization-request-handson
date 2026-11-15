@@ -1,0 +1,35 @@
+name: rar-handson
+services:
+  keycloak:
+    build: ./services/keycloak
+    command: [start-dev, --import-realm]
+    environment:
+      KC_HOSTNAME: http://localhost:18771
+      KC_HTTP_ENABLED: "true"
+    ports: ["127.0.0.1:18771:8080"]
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./config/realm.json:/opt/keycloak/data/import/realm.json:ro
+    networks: [lab]
+  api:
+    build: ./services/api
+    environment:
+      OIDC_ISSUER: http://localhost:18771/realms/rar-lab
+      OIDC_INTERNAL: http://keycloak:8080/realms/rar-lab
+      APP_ORIGIN: http://localhost:18770
+      OPA_URL: http://opa:8181/v1/data/documents/decision
+    ports: ["127.0.0.1:18770:8000"]
+    depends_on: [keycloak, opa]
+    networks: [lab]
+  opa:
+    image: openpolicyagent/opa:1.9.0-static@sha256:60b6af32b58377718546ac7d4634eecbfe50ec36f7d3ca3f8ebf515f9826c2ac
+    command: [run, --server, --addr=0.0.0.0:8181, /policies/documents.rego]
+    volumes: ["./policies:/policies:ro"]
+    networks: [lab]
+networks:
+  lab:
+    ipam:
+      config:
+        - subnet: ${RAR_SUBNET:-10.253.71.0/24}
+volumes:
+  keycloak-data:

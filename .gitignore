@@ -1,0 +1,6 @@
+.env
+.secrets/
+artifacts/
+**/target/
+**/__pycache__/
+*.pyc

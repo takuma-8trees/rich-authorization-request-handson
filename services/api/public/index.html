@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAR Lab — 許可の範囲を、確かめる</title><link rel="stylesheet" href="/static/style.css"><script defer src="/static/app.js"></script></head>
+<body><main>
+<header><a class="brand" href="/">RAR<span>LAB</span></a><span class="edition">OAUTH 2.0 / HANDS-ON 01</span></header>
+<section class="hero"><p class="eyebrow">RICH AUTHORIZATION REQUESTS</p><h1>「更新できる」から、<br><em>「この文書を更新できる」へ。</em></h1><p class="lead">同じAPI、同じユーザー、同じscope。<br>アクセス許可に対象を加えると、結果はどう変わるでしょうか。</p><div class="flow"><span>要求</span><b>→</b><span>Keycloakで同意</span><b>→</b><span>トークン</span><b>→</b><span>API ＋ OPA</span></div></section>
+<p id="notice" role="status" hidden></p>
+<section class="step"><div class="section-title"><span class="number">01</span><div><h2>2つの許可を取得する</h2><p>まずscope版、次にRAR版。Keycloakでは同じデモユーザーでログインしてください。</p></div></div>
+<p class="credentials">実験専用アカウント <code>alice</code> / <code>alice-demo-password</code> <span>トークンは5分間有効です。</span></p>
+<div class="two-columns">
+<article class="card scope"><span class="tag">BASELINE</span><h3>scopeだけ</h3><p>本人の文書を参照・更新。<br>今回の許可に文書IDの限定はありません。</p><pre>scope=document.read document.update</pre><a class="button secondary" href="/auth/login?mode=scope">① scope版を取得</a><p id="scope-status" class="token-status">未取得</p></article>
+<article class="card rar"><span class="tag">RAR</span><h3>対象まで指定</h3><p>scopeは同じ。<br>許可する文書と操作を追加します。</p><div class="selection"><label>対象文書<select id="grant-document"><option value="doc-a">文書A</option><option value="doc-b">文書B</option></select></label><label>許可する操作<select id="grant-actions"><option value="read,update">参照と更新</option><option value="read">参照のみ</option></select></label></div><a id="rar-login" class="button" href="/auth/login?mode=rar">② RAR版を取得</a><p id="rar-status" class="token-status">未取得</p></article>
+</div>
+<details class="inspector"><summary>要求した内容・承認された内容・トークンを見比べる</summary><p>以下はAPI側で署名検証したトークンの抜粋です。生JWTは通常表示しません。</p><div class="two-columns"><div><h3>scope版</h3><pre id="scope-claims">未取得</pre></div><div><h3>RAR版</h3><h4>要求</h4><pre id="rar-request">未取得</pre><h4>トークン応答のauthorization_details</h4><pre id="rar-response">未取得</pre><h4>JWTクレーム</h4><pre id="rar-claims">未取得</pre></div></div></details>
+</section>
+<section class="step"><div class="section-title"><span class="number">02</span><div><h2>同じAPIを呼び比べる</h2><p>文書Aを許可したRAR版で、文書Bを更新してみましょう。次にscope版へ切り替えて同じ操作を試します。</p></div></div>
+<div class="toolbar"><label>呼び出しに使うトークン<select id="mode"><option value="rar">RAR版</option><option value="scope">scope版</option></select></label><span id="active-token">トークンを取得してください</span></div>
+<div class="two-columns"><article class="document"><div class="doc-head"><span class="file-icon">A</span><div><h3>文書A</h3><code>/documents/doc-a</code></div></div><p id="doc-a-body" class="observed">APIからまだ取得していません。</p><label>更新する本文<input id="doc-a-input" value="会議は15時からです。" maxlength="2000"></label><div class="buttons"><button data-doc="doc-a" data-method="GET" class="secondary">Aを参照</button><button data-doc="doc-a" data-method="PATCH">Aを更新</button></div></article>
+<article class="document"><div class="doc-head"><span class="file-icon">B</span><div><h3>文書B</h3><code>/documents/doc-b</code></div></div><p id="doc-b-body" class="observed">APIからまだ取得していません。</p><label>更新する本文<input id="doc-b-input" value="出張先は大阪です。" maxlength="2000"></label><div class="buttons"><button data-doc="doc-b" data-method="GET" class="secondary">Bを参照</button><button data-doc="doc-b" data-method="PATCH">Bを更新</button></div></article></div>
+<div id="result" class="result" aria-live="polite"><p>ボタンを押すと、実際のHTTPステータスとOPAの判定が表示されます。</p></div>
+<details class="inspector"><summary>リクエスト・レスポンスのJSON</summary><pre id="response-json">まだ呼び出していません。</pre></details>
+</section>
+<section class="step"><div class="section-title"><span class="number">03</span><div><h2>許可されても、実行できない？</h2><p>RAR版でAの更新が成功したら、提供側でAを「編集禁止」にして、同じトークンでもう一度更新してください。</p></div></div>
+<div class="policy"><div><strong>提供側のポリシー</strong><p>「編集禁止の文書は更新しない」。RARとは別に、OPAが判定します。</p></div><label class="switch"><input type="checkbox" id="locked"> 文書Aを編集禁止にする</label></div><p class="small">このスイッチはハンズオン専用の管理操作です。トークンは変更・再発行しません。チェックを外すと元に戻ります。</p>
+<details class="inspector"><summary>もう一歩：未対応の条件を要求すると？</summary><p>このデモで定義していない項目をRARに追加します。認可サーバーは条件を無視して発行せず、<code>invalid_authorization_details</code>で拒否します。</p><a class="button secondary" href="/auth/login?mode=invalid">未対応の条件を送る</a></details>
+</section>
+<section class="takeaway"><span class="tag">持ち帰ること</span><h2>RARは、細かなアクセス要求を<br>OAuthの共通形式で伝える。</h2><p>JWTには以前から独自情報を載せられます。RARが標準化するのは、詳細なアクセスの要求と承認結果をやり取りする方法です。条件の意味は業務ごとに定義し、APIとOPAが実行時に強制します。</p><p>このデモの文書用typeは独自の定義です。RARを載せるだけで自動的に安全になるわけではありません。</p></section>
+<details class="inspector"><summary>curlでも実際のAPIを試す</summary><p>選択中トークンを表示します。ローカル実験用です。生JWTを記事やスクリーンショットに載せないでください。</p><button id="export" class="secondary">選択中のトークンを表示</button><pre id="curl">ここにcurlコマンドを表示します。</pre></details>
+<footer>Keycloak 26.8.1 · OPA 1.9.0 · 文書はAPI再起動で初期化 · ローカル学習用<br><a href="https://github.com/takuma-8trees/rich-authorization-request-handson">ソースコードと手順</a></footer>
+</main></body></html>

@@ -1,0 +1,37 @@
+{
+  "realm": "rar-lab", "enabled": true, "sslRequired": "none",
+  "registrationAllowed": false, "loginTheme": "rar-lab", "accessTokenLifespan": 300,
+  "browserFlow": "rar-browser-flow",
+  "authenticationFlows": [{
+    "alias": "rar-browser-flow", "providerId": "basic-flow", "topLevel": true, "builtIn": false,
+    "authenticationExecutions": [
+      {"authenticator": "auth-username-password-form", "requirement": "REQUIRED", "priority": 10, "authenticatorFlow": false},
+      {"authenticator": "rar-lab-consent", "requirement": "REQUIRED", "priority": 20, "authenticatorFlow": false}
+    ]
+  }],
+  "clientProfiles": {"profiles": [{"name": "rar-lab", "executors": [{"executor": "rar-lab-policy", "configuration": {}}]}]},
+  "clientPolicies": {"policies": [{"name": "rar-lab", "enabled": true, "conditions": [{"condition": "client-access-type", "configuration": {"type": ["public"]}}], "profiles": ["rar-lab"]}]},
+  "clientScopes": [
+    {"name": "lab-identity", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "false"}, "protocolMappers": [
+      {"name": "subject", "protocol": "openid-connect", "protocolMapper": "oidc-sub-mapper", "config": {"access.token.claim": "true", "id.token.claim": "true"}},
+      {"name": "username", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-property-mapper", "config": {"user.attribute": "username", "claim.name": "preferred_username", "jsonType.label": "String", "access.token.claim": "true", "id.token.claim": "true"}}
+    ]},
+    {"name": "document.read", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true"}},
+    {"name": "document.update", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true"}}
+  ],
+  "clients": [{
+    "clientId": "rar-browser", "name": "RAR Lab", "enabled": true, "protocol": "openid-connect", "publicClient": true,
+    "standardFlowEnabled": true, "directAccessGrantsEnabled": false,
+    "redirectUris": ["http://localhost:18770/auth/callback"], "webOrigins": ["http://localhost:18770"],
+    "attributes": {"pkce.code.challenge.method": "S256"},
+    "defaultClientScopes": ["lab-identity"], "optionalClientScopes": ["document.read", "document.update"],
+    "protocolMappers": [
+      {"name": "api-audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": {"included.custom.audience": "document-api", "access.token.claim": "true", "id.token.claim": "false"}},
+      {"name": "rar-grant", "protocol": "openid-connect", "protocolMapper": "rar-lab-grant", "config": {"access.token.claim": "true"}}
+    ]
+  }],
+  "users": [{
+    "username": "alice", "enabled": true, "emailVerified": true, "firstName": "Alice", "lastName": "Demo", "email": "alice@example.test",
+    "credentials": [{"type": "password", "value": "alice-demo-password", "temporary": false}]
+  }]
+}
