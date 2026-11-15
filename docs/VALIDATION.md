@@ -48,7 +48,13 @@ OPA停止後はスクリプトのtrapで復旧。既存の別プロジェクト�
 | Aを編集禁止にし、同じRAR版で更新 | 403、提供側条件のみ不一致 |
 | 編集禁止を解除 | 解除メッセージと未チェック状態を確認 |
 
-## イメージの固定
+## 新規cloneからの再現
+
+実装コミット `d36168d` を `git clone --no-hardlinks` で別ディレクトリへcloneし、空の専用volumeで `docker compose up -d --build` → `sh run/verify.sh` → `sh run/verify-opa-offline.sh` を実行。すべて成功しました。元の実験用構成を一時停止し、検証用Compose project名を `rar-handson-clean`、サブネットを `10.253.72.0/24` にして既存データから分離しました。ビルドキャッシュは共有しています。GitHub経由のclone検証とは区別します。
+
+この後のコミットは検証記録の追記のみで、実行資材は同一です。
+
+## イメージの固定とdigest
 
 Dockerfile / Composeで次のmulti-platform manifest digestを固定。2026-11-15に `docker buildx imagetools inspect` で確認しました。
 
